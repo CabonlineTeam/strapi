@@ -13,7 +13,7 @@ module.exports = mongoose => {
         case 'array':
           return 'Array';
         case 'refs':
-          return [String];
+          return [mongoose.Schema.Types.Mixed];
         case 'boolean':
           return 'Boolean';
         case 'binary':
