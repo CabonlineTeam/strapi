@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
 const _ = require('lodash');
 
 const Service = require('../services/ContentTypeBuilder');
@@ -247,6 +246,6 @@ module.exports = {
       }
     }
 
-    ctx.send({ tableExists: true })
+    ctx.send({ tableExists: true });
   }
 };

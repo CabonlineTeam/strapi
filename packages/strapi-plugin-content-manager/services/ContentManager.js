@@ -26,7 +26,7 @@ const getTitle = record => {
 
 module.exports = {
   fetchAll: async (params, query) => {
-    const { limit, skip = 0, sort, query : request, queryAttribute, source, page, populate = [] } = query;
+    const { limit, skip = 0, sort, query : request, queryAttribute, source, page, populate = [] } = query; // eslint-disable-line no-unused-vars
 
     // Find entries using `queries` system
     return await strapi.query(params.model, source).find({
