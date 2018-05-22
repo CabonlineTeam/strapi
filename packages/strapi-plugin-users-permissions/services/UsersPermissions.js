@@ -288,7 +288,7 @@ module.exports = {
 
   removeDuplicate: async function () {
     const primaryKey = strapi.query('permission', 'users-permissions').primaryKey;
-
+    
     // Retrieve permissions by creation date (ID or ObjectID).
     const permissions = await strapi.query('permission', 'users-permissions').find({
       sort: `${primaryKey}`
@@ -319,8 +319,10 @@ module.exports = {
 
     // It's has been already initialized.
     if (roles > 0) {
-      await this.removeDuplicate();
-      return await this.updatePermissions(cb);
+      return await this.updatePermissions(async () => {
+        await this.removeDuplicate();
+        cb();
+      });
     }
 
     // Create two first default roles.
