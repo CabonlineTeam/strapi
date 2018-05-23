@@ -72,7 +72,7 @@ class Edit extends React.PureComponent {
   setLayout = (props) => {
     const currentLayout = get(props.layout, [props.modelName, 'attributes']);
     const displayedFields = merge(this.getUploadRelations(props), get(currentLayout), omit(props.schema.fields, 'id'));
-
+    
     this.setState({ currentLayout, displayedFields });
   }
 
@@ -131,11 +131,22 @@ class Edit extends React.PureComponent {
   // orderAttributes = (displayedFields) => Object.keys(displayedFields).sort(name => Object.keys(this.getUploadRelations(this.props)).includes(name));
   orderAttributes = (displayedFields) => Object.keys(displayedFields);
 
-  transformLabel(label) {
-    return label.replace('_sv', ' 🇸🇪').replace('_en', ' 🇬🇧');
+  transformLabel(label, orignalLabel) {
+    if(!label) {
+      return orignalLabel.replace('_sv', ' 🇸🇪').replace('_en', ' 🇬🇧');
+    }
+    if(orignalLabel.includes("_sv")) {
+      return `${label} 🇸🇪`
+    }
+    else if(orignalLabel.includes("_en")) {
+      return `${label} 🇬🇧`
+    }
+
+    return label;
   }
 
   render(){
+    
     return (
       <div className={styles.form}>
         <div className="row">
@@ -145,7 +156,9 @@ class Edit extends React.PureComponent {
             const layout = this.getInputLayout(attr);
             const appearance = get(layout, 'appearance');
             const type = !isEmpty(appearance) ? appearance.toLowerCase() : get(layout, 'type', getInputType(details.type));
-            const label = get(layout, 'label') || details.label || '';
+            const attributes = this.props.attributes[attr];
+            const orignalLabel = get(layout, 'label') || details.label || '';
+            const label = this.transformLabel(attributes.label, orignalLabel)
 
             return (
               <Input
@@ -154,7 +167,7 @@ class Edit extends React.PureComponent {
                 didCheckErrors={this.props.didCheckErrors}
                 errors={this.getInputErrors(attr)}
                 key={attr}
-                label={this.transformLabel(label)}
+                label={label}
                 multiple={this.fileRelationAllowMultipleUpload(attr)}
                 name={attr}
                 onBlur={this.props.onBlur}
@@ -165,6 +178,7 @@ class Edit extends React.PureComponent {
                 type={type}
                 validations={this.getInputValidations(attr)}
                 value={this.props.record[attr]}
+                inputDescription={attributes.description}
                 modelName={this.props.modelName}
               />
             );

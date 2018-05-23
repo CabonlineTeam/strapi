@@ -253,7 +253,7 @@ export class EditPage extends React.Component {
 
   render() {
     const { editPage } = this.props;
-
+    
     return (
       <div>
         <form onSubmit={this.handleSubmit}>

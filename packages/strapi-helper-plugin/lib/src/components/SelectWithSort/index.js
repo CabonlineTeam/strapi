@@ -69,10 +69,11 @@ class SelectWithSort extends React.Component {
 
     if(loading) return 'Loading...';
 
+   
     return (
       <React.Fragment>
         <div style={style}>
-          <Dropdown options={selectOptions} selected={items} onChange={this.onSelectChange} />
+          <Dropdown groupByProp="type" options={selectOptions} selected={items} onChange={this.onSelectChange} />
         </div>
         <div style={style}>
           <SortList items={items} onRemove={this.onRemove} onChange={this.onSortChange} />
