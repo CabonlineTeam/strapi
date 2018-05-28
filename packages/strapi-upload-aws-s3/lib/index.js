@@ -70,9 +70,8 @@ module.exports = {
       }
     });
 
-    let basePath = config.basePath
-      .trim()
-      .match(/\/$/) ? basePath : `${basePath}/`;
+    let basePath = config.basePath && config.basePath.trim() || '';
+    basePath = basePath.match(/\/$/) ? basePath : `${basePath}/`;
 
     if (basePath === '/') basePath = '';
 
