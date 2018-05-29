@@ -49,6 +49,10 @@ module.exports = {
     bucket: {
       label: 'Bucket',
       type: 'text'
+    },
+    basePath: {
+      label: 'Base path',
+      type: 'text'
     }
   },
   init: (config) => {
@@ -66,14 +70,20 @@ module.exports = {
       }
     });
 
+    let basePath = config.basePath && config.basePath.trim() || '';
+    basePath = basePath.match(/\/$/) ? basePath : `${basePath}/`;
+
+    if (basePath === '/') basePath = '';
+
     return {
       upload: (file) => {
         return new Promise((resolve, reject) => {
           // upload file on S3 bucket
           S3.upload({
-            Key: `${file.hash}${file.ext}`,
+            Key: `${basePath}${file.hash}${file.ext}`,
             Body: new Buffer(file.buffer, 'binary'),
-            ACL: 'public-read'
+            ACL: 'public-read',
+            ContentType: file.mime
           }, (err, data) => {
             if (err) {
               return reject(err);
@@ -92,7 +102,7 @@ module.exports = {
           S3.deleteObjects({
             Delete: {
               Objects: [{
-                Key: `${file.hash}${file.ext}`
+                Key: `${basePath}${file.hash}${file.ext}`
               }]
             }
           }, (err, data) => {
