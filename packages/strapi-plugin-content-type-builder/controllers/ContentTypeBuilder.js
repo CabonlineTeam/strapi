@@ -9,12 +9,15 @@ const ensureLocales = attributes => {
   const locales = strapi.config.autoLocales;
 
   if (!locales) return attributes;
+  const originalNames = [];
 
-  attributes.forEach((attribute, index) => {
+  attributes.forEach((attribute) => {
     if (
-      attribute.params.type.match(/(string|text)/i) &&
+      attribute.params.type.match(/(string|text|media)/i) &&
       !attribute.name.match(/.*?_..$/i)
     ) {
+      originalNames.push(attribute.name);
+      
       locales.forEach(locale => {
         if (!attributes.find(a => a.name === `${attribute.name}_${locale}`)) {
           attributes.push({
@@ -23,9 +26,30 @@ const ensureLocales = attributes => {
           });
         }
       });
-      
-      // Remove the initial attribute
-      attributes.splice(index, 1);
+    }
+  });
+
+  // Remove the original fields
+  return attributes.filter(attribute => !originalNames.includes(attribute.name));
+};
+
+const ensureResponsiveImages = attributes => {
+  const sizes = ['small'];
+
+  attributes.forEach((attribute) => {
+    if (
+      attribute.params.type.includes('media') && attribute.name.endsWith('_responsive')
+    ) {
+      attribute.name = attribute.name.replace('_responsive', '');
+
+      sizes.forEach(size => {
+        if (!attributes.find(a => a.name === `${attribute.name}_${size}`)) {
+          attributes.push({
+            ...attribute,
+            name: `${attribute.name}_${size}`
+          });
+        }
+      });
     }
   });
 
@@ -60,9 +84,10 @@ module.exports = {
 
   createModel: async ctx => {
     const { name, description, connection, collectionName, plugin } = ctx.request.body;
-    let { attributes = [] } = ctx.request.body
-
-    attributes = ensureLocales(attributes)
+    let attributes = [...ctx.request.body.attributes || []];
+    
+    attributes = ensureResponsiveImages(attributes);
+    attributes = ensureLocales(attributes);
 
     if (!name) return ctx.badRequest(null, [{ messages: [{ id: 'request.error.name.missing' }] }]);
     if (!_.includes(Service.getConnections(), connection)) return ctx.badRequest(null, [{ messages: [{ id: 'request.error.connection.unknow' }] }]);
@@ -119,7 +144,9 @@ module.exports = {
     const { name, description, connection, collectionName, plugin } = ctx.request.body;
     let { attributes = [] } = ctx.request.body
 
-    attributes = ensureLocales(attributes)
+    attributes = ensureResponsiveImages(attributes);
+    attributes = ensureLocales(attributes);
+  
 
     if (!name) return ctx.badRequest(null, [{ messages: [{ id: 'request.error.name.missing' }] }]);
     if (!_.includes(Service.getConnections(), connection)) return ctx.badRequest(null, [{ messages: [{ id: 'request.error.connection.unknow' }] }]);
