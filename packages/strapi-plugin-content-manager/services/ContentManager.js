@@ -187,7 +187,7 @@ module.exports = {
           }))
           .find(a => a.type === 'refs' && a.name === name);
 
-        const allowedRefs = refField.refs;
+        const allowedRefs = refField && refField.refs;
         if(allowedRefs && allowedRefs.length > 0) {
           propertyKeys = propertyKeys.filter(key => allowedRefs.includes(key))
         }      
