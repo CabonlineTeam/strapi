@@ -109,7 +109,7 @@ class InputRefs extends React.Component {
     if (!noErrorsDescription && !isEmpty(this.state.errors)) {
       spacer = <div />;
     }
-
+    
     const arrayValue = value === '' ? [] : value
     return (
       <div
@@ -126,7 +126,7 @@ class InputRefs extends React.Component {
           message={label}
           style={labelStyle}
         />
-        <SelectWithSort modelName={modelName} onChange={this.onChange} value={arrayValue}/>
+        <SelectWithSort modelName={modelName} name={name} onChange={this.onChange} value={arrayValue}/>
         
         <InputDescription
           className={inputDescriptionClassName}

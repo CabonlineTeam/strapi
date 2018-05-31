@@ -172,18 +172,27 @@ module.exports = {
 
   getRefs: async (query = {}) => {
     const { core_store, ...models } = strapi.models;
-    let propertyKeys = Object.keys(models)
+    let propertyKeys = Object.keys(models);
+    const { model, name } = query;
 
-    if(query.model) {
-      const attributes = _.get(models, `${query.model}._attributes`);      
+    if(model) {
+      const attributes = _.get(models, `${model}._attributes`);    
+      
       if(attributes) {
-        const refField = _.values(attributes).find(a => a.type === "refs");
+        // Get the attribute that is of type refs and match the requested field
+        const refField = Object.entries(attributes)
+          .map(([key, rest]) => ({ 
+            ...rest,
+            name: key
+          }))
+          .find(a => a.type === 'refs' && a.name === name);
+
         const allowedRefs = refField.refs;
         if(allowedRefs && allowedRefs.length > 0) {
           propertyKeys = propertyKeys.filter(key => allowedRefs.includes(key))
         }      
       }
-   }
+    }
 
     const fetchAllModels = propertyKeys.map(async model => {
       const allRecords = await module.exports.fetchAll({ model }, {});

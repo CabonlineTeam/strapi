@@ -37,11 +37,11 @@ class SelectWithSort extends React.Component {
   }
 
   getOptions = () => {
-    const { modelName } = this.props;
-
+    const { modelName, name } = this.props;
     let requestUrl = '/content-manager/explorer/refs';
-    if(modelName) {
-      requestUrl += `?model=${modelName}`;
+
+    if(modelName && name) {
+      requestUrl += `?model=${modelName}&name=${name}`;
     }
     
     request(requestUrl, {
@@ -89,6 +89,7 @@ SelectWithSort.defaultProps = {
 };
 
 SelectWithSort.propTypes = {
+  name: PropTypes.string.isRequired,
   modelName: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
