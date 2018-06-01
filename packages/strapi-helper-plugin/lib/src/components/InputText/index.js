@@ -9,32 +9,44 @@ import styles from './styles.scss';
 
 function InputText(props) {
   const placeholder = isEmpty(props.placeholder) ? 'app.utils.placeholder.defaultMessage' : props.placeholder;
+  
+  let colorPreview;
+  if(typeof props.value === 'string') {
+    const isColor = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(props.value);
 
+    if(isColor) {
+      colorPreview = <div style={{ height: 40, width: '100%', marginTop: 10, backgroundColor: props.value}} />;
+    }
+  }
+ 
   return (
-    <FormattedMessage id={placeholder} defaultMessage={placeholder}>
-      {(message) => (
-        <input
-          autoFocus={props.autoFocus}
-          className={cn(
-            styles.textInput,
-            'form-control',
-            !props.deactivateErrorHighlight && props.error && 'is-invalid',
-            !isEmpty(props.className) && props.className,
-          )}
-          disabled={props.disabled}
-          id={props.name}
-          name={props.name}
-          onBlur={props.onBlur}
-          onChange={props.onChange}
-          onFocus={props.onFocus}
-          placeholder={message}
-          style={props.style}
-          tabIndex={props.tabIndex}
-          type="text"
-          value={props.value}
-        />
-      )}
-    </FormattedMessage>
+    <React.Fragment>
+      <FormattedMessage id={placeholder} defaultMessage={placeholder}>
+        {(message) => (
+          <input
+            autoFocus={props.autoFocus}
+            className={cn(
+              styles.textInput,
+              'form-control',
+              !props.deactivateErrorHighlight && props.error && 'is-invalid',
+              !isEmpty(props.className) && props.className,
+            )}
+            disabled={props.disabled}
+            id={props.name}
+            name={props.name}
+            onBlur={props.onBlur}
+            onChange={props.onChange}
+            onFocus={props.onFocus}
+            placeholder={message}
+            style={props.style}
+            tabIndex={props.tabIndex}
+            type="text"
+            value={props.value}
+          />
+        )}
+      </FormattedMessage>
+      {colorPreview}
+    </React.Fragment>
   );
 }
 
