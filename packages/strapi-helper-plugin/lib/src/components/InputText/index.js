@@ -9,7 +9,7 @@ import styles from './styles.scss';
 
 function InputText(props) {
   const placeholder = isEmpty(props.placeholder) ? 'app.utils.placeholder.defaultMessage' : props.placeholder;
-  
+
   let colorPreview;
   if(typeof props.value === 'string') {
     const isColor = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(props.value);
@@ -18,7 +18,7 @@ function InputText(props) {
       colorPreview = <div style={{ height: 40, width: '100%', marginTop: 10, backgroundColor: props.value}} />;
     }
   }
- 
+
   return (
     <React.Fragment>
       <FormattedMessage id={placeholder} defaultMessage={placeholder}>
@@ -38,6 +38,7 @@ function InputText(props) {
             onChange={props.onChange}
             onFocus={props.onFocus}
             placeholder={message}
+            ref={props.inputRef}
             style={props.style}
             tabIndex={props.tabIndex}
             type="text"
@@ -56,6 +57,7 @@ InputText.defaultProps = {
   deactivateErrorHighlight: false,
   disabled: false,
   error: false,
+  inputRef: () => {},
   onBlur: () => {},
   onFocus: () => {},
   placeholder: 'app.utils.placeholder.defaultMessage',
@@ -69,6 +71,7 @@ InputText.propTypes = {
   deactivateErrorHighlight: PropTypes.bool,
   disabled: PropTypes.bool,
   error: PropTypes.bool,
+  inputRef: PropTypes.func,
   name: PropTypes.string.isRequired,
   onBlur: PropTypes.func,
   onChange: PropTypes.func.isRequired,

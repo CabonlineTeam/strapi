@@ -317,7 +317,7 @@ module.exports = {
   initialize: async function (cb) {
     const roles = await strapi.query('role', 'users-permissions').count();
 
-    // It's has been already initialized.
+    // It has already been initialized.
     if (roles > 0) {
       return await this.updatePermissions(async () => {
         await this.removeDuplicate();
