@@ -137,8 +137,18 @@ module.exports = function(strapi) {
             const done = _.after(_.size(definition.attributes), () => {
               try {
                 // External function to map key that has been updated with `columnName`
-                const mapper = (params = {}) =>
-                  _.mapKeys(params, (value, key) => {
+                const mapper = (params = {}) => {
+                  if (definition.client === 'mysql') {
+                    Object.keys(params).map((key) => {
+                      const attr = definition.attributes[key] || {};
+
+                      if (attr.type === 'json') {
+                        params[key] = JSON.stringify(params[key]);
+                      }
+                    });
+                  }
+
+                  return _.mapKeys(params, (value, key) => {
                     const attr = definition.attributes[key] || {};
 
                     return _.isPlainObject(attr) &&
@@ -146,6 +156,7 @@ module.exports = function(strapi) {
                       ? attr['columnName']
                       : key;
                   });
+                };
 
                 // Update serialize to reformat data for polymorphic associations.
                 loadedModel.serialize = function(options) {
@@ -276,7 +287,7 @@ module.exports = function(strapi) {
                       : Promise.resolve();
                   });
 
-                  this.on('saving', (instance, attrs, options) => {
+                  this.on('saving', (instance, attrs) => {
                     instance.attributes = mapper(instance.attributes);
                     attrs = mapper(attrs);
 
@@ -286,6 +297,52 @@ module.exports = function(strapi) {
                       ? target[model.toLowerCase()]['beforeSave']
                       : Promise.resolve();
                   });
+
+                  // Convert to JSON format stringify json for mysql database
+                  if (definition.client === 'mysql') {
+                    const events = [{
+                      name: 'saved',
+                      target: 'afterSave'
+                    }, {
+                      name: 'fetched',
+                      target: 'afterFetch'
+                    }, {
+                      name: 'fetched:collection',
+                      target: 'afterFetchCollection'
+                    }];
+
+                    const jsonFormatter = (attributes) => {
+                      Object.keys(attributes).map((key) => {
+                        const attr = definition.attributes[key] || {};
+
+                        if (attr.type === 'json') {
+                          attributes[key] = JSON.parse(attributes[key]);
+                        }
+                      });
+                    };
+
+                    events.forEach((event) => {
+                      let fn;
+
+                      if (event.name.indexOf('collection') !== -1 ) {
+                        fn = (instance) => instance.models.map((entry) => {
+                          jsonFormatter(entry.attributes);
+                        });
+                      } else {
+                        fn = (instance) => jsonFormatter(instance.attributes);
+                      }
+
+                      this.on(event.name, (instance) => {
+                        fn(instance);
+
+                        return _.isFunction(
+                          target[model.toLowerCase()][event.target]
+                        )
+                          ? target[model.toLowerCase()][event.target]
+                          : Promise.resolve();
+                      });
+                    });
+                  }
                 };
 
                 loadedModel.hidden = _.keys(
@@ -336,6 +393,7 @@ module.exports = function(strapi) {
                         switch (relation.nature) {
                           case 'oneToOne':
                           case 'manyToOne':
+                          case 'oneWay':
                             type = definition.client === 'pg' ? 'integer' : 'int';
                             break;
                           default:
@@ -344,8 +402,10 @@ module.exports = function(strapi) {
                       } else {
                         switch (attribute.type) {
                           case 'text':
-                          case 'json':
                             type = 'text';
+                            break;
+                          case 'json':
+                            type = definition.client === 'pg' ? 'jsonb' : 'longtext';
                             break;
                           case 'string':
                           case 'enumeration':
@@ -361,7 +421,7 @@ module.exports = function(strapi) {
                             type = definition.client === 'pg' ? 'double precision' : 'double';
                             break;
                           case 'decimal':
-                            type = 'decimal';
+                            type = 'decimal(10,2)';
                             break;
                           case 'date':
                           case 'time':
@@ -397,6 +457,50 @@ module.exports = function(strapi) {
                       }, start);
                     };
 
+                    const generateIndexes = async (table, attrs) => {
+                      try {
+                        const connection = strapi.config.connections[definition.connection];
+                        let columns = Object.keys(attributes).filter(attribute => ['string', 'text'].includes(attributes[attribute].type));
+
+                        switch (connection.settings.client) {
+                          case 'pg':
+                            // Enable extension to allow GIN indexes.
+                            await ORM.knex.raw(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+
+                            // Create GIN indexes for every column.
+                            const indexes = columns
+                              .map(column => {
+                                const indexName = `${_.snakeCase(table)}_${column}`;
+                                const attribute = _.toLower(column) === column
+                                  ? column
+                                  : `"${column}"`;
+
+                                return ORM.knex.raw(`CREATE INDEX search_${_.toLower(indexName)} ON "${table}" USING gin(${attribute} gin_trgm_ops)`);
+                              });
+
+                            await Promise.all(indexes);
+                            break;
+                          default:
+                            columns = columns
+                              .map(attribute => `\`${attribute}\``)
+                              .join(',');
+
+                            // Create fulltext indexes for every column.
+                            await ORM.knex.raw(`CREATE FULLTEXT INDEX SEARCH_${_.toUpper(_.snakeCase(table))} ON \`${table}\` (${columns})`);
+                            break;
+                        }
+                      } catch (e) {
+                        // Handle duplicate errors.
+                        if (e.errno !== 1061 && e.code !== '42P07') {
+                          if (_.get(connection, 'options.debug') === true) {
+                            console.log(e);
+                          }
+
+                          strapi.log.warn(`The SQL database indexes haven't been generated successfully. Please enable the debug mode for more details.`);
+                        }
+                      }
+                    };
+
                     if (!tableExist) {
                       const columns = generateColumns(attributes, [`id ${definition.client === 'pg' ? 'SERIAL' : 'INT AUTO_INCREMENT'} NOT NULL PRIMARY KEY`]).join(',\n\r');
 
@@ -406,6 +510,9 @@ module.exports = function(strapi) {
                           ${columns}
                         )
                       `);
+
+                      // Generate indexes.
+                      await generateIndexes(table, attributes);
                     } else {
                       const columns = Object.keys(attributes);
 
@@ -425,15 +532,18 @@ module.exports = function(strapi) {
                         }
                       });
 
+                      // Generate indexes for new attributes.
+                      await generateIndexes(table, columnsToAdd);
+
                       // Generate and execute query to add missing column
                       if (Object.keys(columnsToAdd).length > 0) {
                         const columns = generateColumns(columnsToAdd, []);
                         const queries = columns.reduce((acc, attribute) => {
                           acc.push(`ALTER TABLE ${quote}${table}${quote} ADD ${attribute};`);
                           return acc;
-                        }, []).join('\n\r');
+                        }, []);
 
-                        await ORM.knex.raw(queries);
+                        await Promise.all(queries.map(query => ORM.knex.raw(query)));
                       }
 
                       // Execute query to update column type
@@ -916,6 +1026,13 @@ module.exports = function(strapi) {
           result.value = {
             symbol: 'like',
             value: `%${value}%`
+          };
+          break;
+        case '_in':
+          result.key = `where.${key}`;
+          result.value = {
+            symbol: 'IN',
+            value,
           };
           break;
         default:

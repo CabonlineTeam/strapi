@@ -51,6 +51,8 @@ const getInputType = (type = '') => {
       return 'file';
     case 'refs':
       return 'refs';
+    case 'json':
+      return 'json';
     default:
       return 'text';
   }
@@ -72,7 +74,7 @@ class Edit extends React.PureComponent {
   setLayout = (props) => {
     const currentLayout = get(props.layout, [props.modelName, 'attributes']);
     const displayedFields = merge(this.getUploadRelations(props), get(currentLayout), omit(props.schema.fields, 'id'));
-    
+
     this.setState({ currentLayout, displayedFields });
   }
 
@@ -146,7 +148,7 @@ class Edit extends React.PureComponent {
   }
 
   render(){
-    
+
     return (
       <div className={styles.form}>
         <div className="row">
