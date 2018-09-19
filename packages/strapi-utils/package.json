@@ -18,11 +18,11 @@
     "test": "echo \"Error: no test specified yet!\""
   },
   "dependencies": {
-    "commander": "^2.11.0",
-    "joi-json": "^2.0.1",
-    "knex": "^0.13.0",
-    "lodash": "^4.17.4",
-    "pino": "^4.7.1"
+    "commander": "2.11.0",
+    "joi-json": "2.0.1",
+    "knex": "0.13.0",
+    "lodash": "4.17.4",
+    "pino": "4.17.6"
   },
   "author": {
     "email": "hi@strapi.io",

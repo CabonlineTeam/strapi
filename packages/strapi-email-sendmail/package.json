@@ -12,7 +12,7 @@
   },
   "main": "./lib",
   "dependencies": {
-    "sendmail": "^1.2.0"
+    "sendmail": "1.2.0"
   },
   "strapi": {
     "isProvider": true

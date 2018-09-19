@@ -15,9 +15,9 @@
   },
   "main": "./lib",
   "dependencies": {
-    "consolidate": "^0.14.5",
-    "koa-views": "^6.1.1",
-    "lodash": "^4.17.4"
+    "consolidate": "0.14.5",
+    "koa-views": "6.1.1",
+    "lodash": "4.17.4"
   },
   "strapi": {
     "isHook": true

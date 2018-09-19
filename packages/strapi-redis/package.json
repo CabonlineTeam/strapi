@@ -15,8 +15,8 @@
   },
   "main": "./lib",
   "dependencies": {
-    "ioredis": "^3.1.2",
-    "lodash": "^4.17.4",
+    "ioredis": "3.1.2",
+    "lodash": "4.17.4",
     "stack-trace": "0.0.10",
     "strapi-utils": "3.0.0-alpha.12.6"
   },

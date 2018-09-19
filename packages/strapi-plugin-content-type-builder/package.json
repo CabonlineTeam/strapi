@@ -22,7 +22,7 @@
     "prepublishOnly": "IS_MONOREPO=true npm run build"
   },
   "dependencies": {
-    "pluralize": "^7.0.0",
+    "pluralize": "7.0.0",
     "strapi-generate": "3.0.0-alpha.12.6",
     "strapi-generate-api": "3.0.0-alpha.12.6"
   },
